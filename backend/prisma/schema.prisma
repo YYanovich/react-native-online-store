@@ -1,0 +1,107 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               String   @id @default(uuid())
+  email            String   @unique
+  password         String
+  fullName         String?  @map("full_name")
+  phoneNumber      String?  @map("phone_number")
+  shippingAddress  String?  @map("shipping_address")
+  verified         Boolean  @default(false) @map("is_verified")
+  verificationCode String?  @map("verification_code")
+  verificationCodeExpiresAt DateTime? @map("verification_code_expires_at")
+  resetPasswordCode String? @map("reset_password_code")
+  resetPasswordCodeExpiresAt DateTime? @map("reset_password_code_expires_at")
+  role             Role     @default(USER)
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+  hashedRt         String?  @map("hashed_rt")
+  orders           Order[]
+  @@map("users")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model Product {
+  id          String   @id @default(uuid())
+  name        String
+  description String
+  inStock     Int      @default(0) @map("in_stock")
+  price       Float    @default(0)
+  category    String
+  imageUrl    String?  @map("image_url")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  orderDetails OrderDetail[]
+
+  @@map("products")
+}
+
+enum PaymentStatus {
+  COMPLETE
+  FAILED
+  PENDING
+}
+
+enum DeliveryStatus {
+  PENDING
+  IN_TRANSIT
+  DELIVERED
+}
+
+model Order {
+  orderId       String          @id @default(uuid()) @map("order_id")
+  user          User            @relation(fields: [userId], references: [id])
+  userId        String          @map("user_id")
+  totalAmount   Float           @default(0) @map("total_amount")
+  paymentStatus PaymentStatus   @default(PENDING) @map("payment_status")
+  deliveryStatus DeliveryStatus @default(PENDING) @map("delivery_status")
+  details       OrderDetail[]
+  payment       Payment?
+  createdAt     DateTime        @default(now()) @map("created_at")
+  updatedAt     DateTime        @updatedAt @map("updated_at")
+
+  @@map("orders")
+}
+
+model OrderDetail {
+  orderDetailId  String   @id @default(uuid()) @map("order_detail_id")
+  order          Order    @relation(fields: [orderId], references: [orderId])
+  orderId        String   @map("order_id")
+  product        Product  @relation(fields: [productId], references: [id])
+  productId      String   @map("product_id")
+  quantity       Int
+  priceAtPurchase Float   @map("price_at_purchase")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@map("order_details")
+}
+
+enum PaymentResult {
+  SUCCESS
+  FAILED
+}
+
+model Payment {
+  paymentId     String        @id @default(uuid()) @map("payment_id")
+  order         Order         @relation(fields: [orderId], references: [orderId])
+  orderId       String        @unique @map("order_id")
+  totalAmount   Float         @map("total_amount")
+  paymentStatus PaymentResult @map("payment_status")
+  transactionId String        @map("transaction_id")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  @@map("payments")
+}

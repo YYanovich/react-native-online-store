@@ -1,0 +1,10 @@
+{
+  "dependencies": {
+    "@nestjs-modules/mailer": "^2.0.2",
+    "@sendgrid/mail": "^8.1.6",
+    "nodemailer": "^7.0.10"
+  },
+  "devDependencies": {
+    "@types/nodemailer": "^7.0.3"
+  }
+}
